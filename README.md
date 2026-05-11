@@ -48,7 +48,7 @@ npx cap open android
 ---
 
 📲  
-##Nota:  
+## Nota:  
 **La APK ya se encuentra en la carpeta (APK)**
 
 
