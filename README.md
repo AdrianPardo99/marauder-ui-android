@@ -47,7 +47,8 @@ npx cap open android
 
 ---
 
-## 🗺️ Notas sobre los Mapas
-- La aplicación utiliza **OpenStreetMap** (vía Leaflet) para renderizar el panel GPS. 
-- A partir de Android 9, el sistema operativo es estricto con las descargas en segundo plano. Este repositorio ya viene configurado con `android:usesCleartextTraffic="true"` en el *AndroidManifest* para evitar que el mapa se quede en negro.
-- **Importante:** Para que el mapa funcione (descargue las imágenes de las calles), el teléfono debe tener conexión a Internet (WiFi o Datos Móviles). Si no hay internet y no hay señal GPS del ESP32, el mapa podría mostrar la coordenada `0,0` (un océano azul).
+📲  
+## Nota:  
+**La APK ya se encuentra en la carpeta (APK)**
+
+
