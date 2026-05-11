@@ -45,10 +45,5 @@ npx cap open android
 ```
 *(Si ya tienes tu celular conectado por USB con el modo de depuración activado, puedes correr la app directamente desde la terminal con `npx cap run android`)*.
 
----
-
-📲  
-## Nota:  
-**La APK ya se encuentra en la carpeta (APK)**
 
 
