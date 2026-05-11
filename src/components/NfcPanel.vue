@@ -1,0 +1,363 @@
+<template>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-2xl font-bold text-zinc-100 flex items-center gap-2">
+        <span class="text-accent">󱠔</span> NFC Control Panel
+      </h2>
+      <div class="flex gap-2">
+        <button @click="handleScan" class="btn btn-primary flex items-center gap-2" :disabled="isWorking">
+          <span v-if="isWorking" class="animate-spin text-lg">󱑊</span>
+          <span>Scan Chip</span>
+        </button>
+        <button @click="handleRead" class="btn btn-accent flex items-center gap-2" :disabled="isWorking">
+          <span>Read Tag</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="card p-4 bg-zinc-900/50 border-zinc-800">
+      <div class="flex items-center gap-4 text-sm">
+        <span class="text-zinc-400 font-mono">Chip Status:</span>
+        <span :class="chipStatusClass" class="font-bold flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full" :class="chipStatusDotClass"></span>
+          {{ chipStatus }}
+        </span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Write Card -->
+      <div class="card p-6 flex flex-col gap-4">
+        <h3 class="text-lg font-bold text-zinc-100 mb-2">Write NDEF Record</h3>
+        
+        <div class="flex flex-col gap-3">
+          <label class="text-sm text-zinc-400">Record Type</label>
+          <div class="grid grid-cols-4 gap-2">
+            <button 
+              v-for="type in writeTypes" 
+              :key="type.id"
+              @click="writeType = type.id"
+              class="btn text-xs py-2"
+              :class="writeType === type.id ? 'btn-accent' : 'bg-zinc-800'"
+            >
+              {{ type.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- URL Input -->
+        <div v-if="writeType === 'url'" class="flex flex-col gap-2 mt-2">
+          <label class="text-sm text-zinc-400 font-mono">URL Address</label>
+          <input 
+            v-model="writeContent.url" 
+            type="text" 
+            placeholder="google.com" 
+            class="input-field"
+          />
+        </div>
+
+        <!-- Text Input -->
+        <div v-if="writeType === 'text'" class="flex flex-col gap-2 mt-2">
+          <label class="text-sm text-zinc-400 font-mono">Text Message</label>
+          <input 
+            v-model="writeContent.text" 
+            type="text" 
+            placeholder="Hello from Marauder" 
+            class="input-field"
+          />
+        </div>
+
+        <!-- vCard Input -->
+        <div v-if="writeType === 'vcard'" class="flex flex-col gap-3 mt-2">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-zinc-500 uppercase">Full Name</label>
+            <input v-model="writeContent.vcard.name" type="text" placeholder="Full Name" class="input-field text-sm" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-zinc-500 uppercase">Phone Number</label>
+            <input v-model="writeContent.vcard.phone" type="text" placeholder="+12345678" class="input-field text-sm" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-zinc-500 uppercase">Email Address</label>
+            <input v-model="writeContent.vcard.email" type="text" placeholder="mail@example.com" class="input-field text-sm" />
+          </div>
+        </div>
+
+        <!-- WiFi Input -->
+        <div v-if="writeType === 'wifi'" class="flex flex-col gap-3 mt-2">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-zinc-500 uppercase">Network SSID</label>
+            <input v-model="writeContent.wifi.ssid" type="text" placeholder="Network Name" class="input-field text-sm font-mono" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-zinc-500 uppercase">Password</label>
+            <input v-model="writeContent.wifi.pass" type="text" placeholder="WPA/WPA2 Key" class="input-field text-sm font-mono" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-zinc-500 uppercase">Security Type</label>
+            <select v-model="writeContent.wifi.auth" class="input-field text-sm">
+              <option value="WPA2">WPA2 (Standard)</option>
+              <option value="WPA">WPA</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">None (Open)</option>
+            </select>
+          </div>
+        </div>
+
+        <button @click="handleWrite" class="btn btn-primary mt-4 py-3 font-bold" :disabled="isWorking || !canWrite">
+          Execute Write Operation
+        </button>
+      </div>
+
+      <!-- Social Presets Card -->
+      <div class="card p-6 flex flex-col gap-4 border-cyan-900/20 bg-cyan-950/5">
+        <h3 class="text-lg font-bold text-zinc-100 flex items-center gap-2 mb-2">
+          <span class="text-cyan-400">󰚙</span> Social Profiles
+        </h3>
+        
+        <div class="space-y-4">
+          <div v-for="social in socialList" :key="social.id" class="flex flex-col gap-1">
+            <label class="text-[10px] text-zinc-500 uppercase tracking-tighter">{{ social.label }}</label>
+            <div class="flex gap-2">
+              <input v-model="socials[social.id]" 
+                class="input-field text-xs py-1.5 flex-1" 
+                :placeholder="'Handle...'" />
+              <button @click="writeSocial(social.prefix + socials[social.id])" 
+                class="btn btn-accent px-3 text-sm hover:scale-105 active:scale-95 transition-transform"
+                title="Write to Tag">
+                󱠓
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-2 text-[10px] text-zinc-600 italic">
+          Tip: Enter your handles and click the icon to instantly program the tag.
+        </div>
+      </div>
+
+      <!-- Result Card -->
+      <div class="card p-4 bg-black flex flex-col font-mono text-sm overflow-hidden border-zinc-800 md:col-span-2">
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800/50">
+          <span class="text-zinc-500 text-xs uppercase tracking-widest">Tag Memory Dump</span>
+          <span class="text-[10px] text-zinc-600">NT3H2111 Block View</span>
+        </div>
+        <div class="flex-1 overflow-y-auto max-h-[300px] custom-scrollbar text-xs leading-relaxed pr-2">
+          <pre v-if="tagReadData" class="text-zinc-300">Block | Hex Data | ASCII
+--------------------------------
+{{ tagReadData }}</pre>
+          <div v-else class="h-full flex flex-col items-center justify-center text-zinc-600 py-12 italic">
+            <span class="text-2xl mb-2">󱠓</span>
+            No tag data read yet
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch, inject, onMounted, onUnmounted } from 'vue'
+
+const serialConnection = inject('serialConnection')
+const isWorking = ref(false)
+const chipStatus = ref('NOT_SCANNED')
+const tagReadData = ref('')
+const writeType = ref('url')
+
+const writeContent = ref({
+  url: '',
+  text: '',
+  vcard: {
+    name: '',
+    phone: '',
+    email: ''
+  },
+  wifi: {
+    ssid: '',
+    pass: '',
+    auth: 'WPA2'
+  }
+})
+
+const writeTypes = [
+  { id: 'url', label: 'URL' },
+  { id: 'text', label: 'Text' },
+  { id: 'vcard', label: 'Contact' },
+  { id: 'wifi', label: 'WiFi' }
+]
+
+const socialList = [
+  { id: 'instagram', label: 'Instagram', prefix: 'URI:https://instagram.com/' },
+  { id: 'tiktok', label: 'TikTok', prefix: 'URI:https://tiktok.com/@' },
+  { id: 'whatsapp', label: 'WhatsApp', prefix: 'URI:https://wa.me/' },
+  { id: 'telegram', label: 'Telegram', prefix: 'URI:https://t.me/' },
+  { id: 'youtube', label: 'YouTube', prefix: 'URI:https://youtube.com/@' },
+  { id: 'linkedin', label: 'LinkedIn', prefix: 'URI:https://linkedin.com/in/' },
+  { id: 'github', label: 'GitHub', prefix: 'URI:https://github.com/' },
+  { id: 'facebook', label: 'Facebook', prefix: 'URI:https://facebook.com/' },
+  { id: 'paypal', label: 'PayPal', prefix: 'URI:https://paypal.me/' }
+]
+
+const socials = ref({
+  instagram: '',
+  tiktok: '',
+  whatsapp: '',
+  telegram: '',
+  youtube: '',
+  linkedin: '',
+  github: '',
+  facebook: '',
+  paypal: ''
+})
+
+const writeSocial = (command) => {
+  if (confirm(`Write Social Profile to tag? Command: ${command}`)) {
+    serialConnection.sendCommand(command)
+  }
+}
+
+const chipStatusClass = computed(() => {
+  if (chipStatus.value === 'READY') return 'text-emerald-400'
+  if (chipStatus.value.includes('ERROR')) return 'text-red-400'
+  return 'text-zinc-500'
+})
+
+const chipStatusDotClass = computed(() => {
+  if (chipStatus.value === 'READY') return 'bg-emerald-400 animate-pulse'
+  if (chipStatus.value.includes('ERROR')) return 'bg-red-400'
+  return 'bg-zinc-700'
+})
+
+const canWrite = computed(() => {
+  if (writeType.value === 'url') return writeContent.value.url.length > 0
+  if (writeType.value === 'text') return writeContent.value.text.length > 0
+  if (writeType.value === 'vcard') return writeContent.value.vcard.name.length > 0
+  if (writeType.value === 'wifi') return writeContent.value.wifi.ssid.length > 0
+  return false
+})
+
+const handleScan = async () => {
+  isWorking.value = true
+  tagReadData.value = ''
+  try {
+    await serialConnection.sendCommand('nfc scan')
+    // We expect the terminal output to update, and we could also parse it
+    // For now we set it to ready if we sent the command (optimistic)
+    chipStatus.value = 'READY' 
+  } catch (e) {
+    chipStatus.value = 'ERROR'
+  } finally {
+    isWorking.value = false
+  }
+}
+
+const handleRead = async () => {
+  isWorking.value = true
+  try {
+    await serialConnection.sendCommand('nfc read')
+  } finally {
+    isWorking.value = false
+  }
+}
+
+const handleWrite = async () => {
+  isWorking.value = true
+  let cmd = ''
+  let ssid = ''
+  
+  if (writeType.value === 'url') {
+    cmd = `URI:${writeContent.value.url}`
+  } else if (writeType.value === 'text') {
+    cmd = `TEXT:${writeContent.value.text}`
+  } else if (writeType.value === 'vcard') {
+    const vc = writeContent.value.vcard
+    cmd = `VCARD:${vc.name}|${vc.phone}|${vc.email}`
+  } else if (writeType.value === 'wifi') {
+    const wf = writeContent.value.wifi
+    ssid = wf.ssid
+    cmd = `WIFI:${wf.ssid}|${wf.pass}|${wf.auth}`
+  }
+
+  try {
+    // 0. If WiFi, clear SSID list first to avoid conflicts
+    if (writeType.value === 'wifi') {
+      await serialConnection.sendCommand('clearap -s')
+    }
+
+    // 1. Write the Tag
+    await serialConnection.sendCommand(cmd)
+    
+    // 2. If it was WiFi, auto-start Evil Portal
+    if (writeType.value === 'wifi' && ssid) {
+      // Small delay to let the NFC write finish
+      await new Promise(r => setTimeout(r, 1000))
+      
+      // We set the SSID for the portal and start it
+      // Note: We use ssid -a -n to set a custom SSID in the list for the portal
+      await serialConnection.sendCommand(`ssid -a -n "${ssid}"`)
+      await serialConnection.sendCommand(`select -s all`)
+      await serialConnection.sendCommand(`evilportal -c start`)
+      
+      alert(`Tag written & Evil Portal started with SSID: ${ssid}`)
+    }
+  } finally {
+    isWorking.value = false
+  }
+}
+
+// Intercept terminal output to populate tagReadData
+const lastProcessedIndex = ref(0)
+watch(() => serialConnection.terminalOutput.value, (newLines) => {
+  if (newLines.length <= lastProcessedIndex.value) {
+    if (newLines.length < lastProcessedIndex.value) lastProcessedIndex.value = 0
+    return
+  }
+
+  const linesToProcess = newLines.slice(lastProcessedIndex.value)
+  lastProcessedIndex.value = newLines.length
+
+  linesToProcess.forEach(line => {
+    const plain = line.replace(/<[^>]+>/g, '').trim()
+    if (!plain) return
+
+    // Check for block data: e.g., "01    | 03 1D..."
+    if (/^\d{1,2}\s+\|/.test(plain)) {
+      tagReadData.value += plain + '\n'
+    }
+    
+    // Update chip status based on detection messages
+    if (plain.includes('FOUND!') || plain.includes('[NFC] Device found') || plain.includes('Chip Status: READY')) {
+      chipStatus.value = 'READY'
+    }
+    if (plain.includes('NT3H2111 not found') || plain.includes('NFC_WRITE_ERROR')) {
+      chipStatus.value = 'ERROR'
+    }
+    if (plain.includes('NFC_WRITE_SUCCESS')) {
+      // Auto-read after success to verify
+      handleRead()
+    }
+  })
+}, { deep: true })
+</script>
+
+<style scoped>
+.btn-accent {
+  @apply bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-500 active:bg-indigo-700 shadow-[2px_2px_0px_rgba(79,70,229,0.3)];
+}
+
+.input-field {
+  @apply w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-indigo-500 transition-colors;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-zinc-800 rounded;
+}
+</style>
