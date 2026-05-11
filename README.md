@@ -45,5 +45,25 @@ npx cap open android
 ```
 *(Si ya tienes tu celular conectado por USB con el modo de depuración activado, puedes correr la app directamente desde la terminal con `npx cap run android`)*.
 
+Contributions are welcome!
 
+Please read the document [**Contribution manual**](https://github.com/ElectronicCats/electroniccats-cla/blob/main/electroniccats-contribution-manual.md) which will show you how to contribute your changes to the project.
+
+✨ Thanks to all our [Contributors](https://github.com/ElectronicCats/Minino/graphs/contributors)! ✨
+
+See [**_Electronic Cats CLA_**](https://github.com/ElectronicCats/electroniccats-cla/blob/main/electroniccats-cla.md) for more information.
+
+See the [**Community code of conduct**](https://github.com/ElectronicCats/electroniccats-cla/blob/main/electroniccats-community-code-of-conduct.md) for a vision of the community we want to build and what we expect from it.
+
+## License
+
+Electronic Cats invests time and resources providing this open source design, please support Electronic Cats and open-source hardware by purchasing products from Electronic Cats!
+
+Designed by Electronic Cats.
+
+Firmware released under an MIT license. See the LICENSE file for more information.
+
+Electronic Cats is a registered trademark, please do not use if you sell these PCBs.
+
+May 11 2026
 
